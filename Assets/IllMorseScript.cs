@@ -103,6 +103,7 @@ public class IllMorseScript : MonoBehaviour
             Audio.PlaySoundAtTransform("HardTypewriterKey", transform);
             yield return new WaitForSeconds(0.3f);
             Audio.PlaySoundAtTransform("DingSound", transform);
+            yield return new WaitForSeconds(0.1f);
             Module.HandlePass();
         }
     public void DotButton(){
@@ -194,7 +195,7 @@ public class IllMorseScript : MonoBehaviour
             "YACHT", "YARDS", "YAWNS", "YEARN", "YEARS", "YEAST", "YELLS", "YIELD", "YODEL", "YOUNG", "YOURS", "YOUTH", "YUMMY",
             "ZEBRA", "ZILCH", "ZINGY", "ZONES"
         };
-        //Scrabble scores for each word in the word list
+        //Scrabble scores for each word in the word list (Props to Blananas2 :D )
         int[] wordScores = { 
             12, 8, 7, 7, 10, 7, 10, 8, 7, 7, 8, 7, 7, 8, 8, 7, 6, 6, 8, 8, 8, 6, 6, 6, 18, 8, 6, 6, 6, 7, 9, 6, 9, 7, 8, 6, 5, 7, 9, 5, 6, 5, 7, 5, 6, 9, 8, 8, 8, 8, 8, 5, 6, 8, 6, 10, 5, 5, 7, 16, 9, 9, 8, 10, 8, 9, 7, 6, 6, 6, 9, 6, 7, 5, 5, 9, 12, 8, 5, 7, 8, 7, 9, 12, 7, 5, 5, 6, 5, 8, 7, 7, 5, 8, 8, 5, 8, 8, 5, 6, 10, 5, 5, 7, 5, 7, 6, 6, 8, 8, 8, 9, 8, 12, 9, 8, 11, 11, 12, 12, 14, 16,
             13, 9, 9, 11, 12, 11, 7, 8, 11, 8, 7, 8, 7, 9, 7, 7, 7, 12, 10, 12, 8, 9, 7, 8, 7, 7, 7, 8, 8, 8, 8, 7, 10, 10, 7, 12, 10, 9, 8, 11, 7, 8, 8, 9, 12, 8, 10, 7, 7, 13, 8, 9, 8, 11, 7, 7, 16, 11, 7, 8, 8, 7, 11, 8, 11, 7, 16, 13, 8, 8, 9, 10, 10, 7, 13, 7, 10, 8, 7, 8, 7, 11, 8, 7, 7, 11, 7, 10, 7, 8, 7, 12, 8, 11, 10, 10, 15, 14, 14, 9, 8, 7, 11, 8, 10, 7, 10, 10, 10, 8, 11, 8, 9, 13, 8, 10, 7, 8, 11, 11, 8, 7, 11, 11, 9, 10, 10, 10, 7, 13, 12, 9, 12, 8, 7, 9, 8, 14, 7, 14, 12, 10, 7, 7, 7, 7, 10, 28, 13, 16,
