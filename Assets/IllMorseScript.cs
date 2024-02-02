@@ -105,6 +105,7 @@ public class IllMorseScript : MonoBehaviour
             Audio.PlaySoundAtTransform("DingSound", transform);
             yield return new WaitForSeconds(0.1f);
             Module.HandlePass();
+            _moduleSolved = true;
         }
     public void DotButton(){
         GetComponent<KMSelectable>().AddInteractionPunch(0.5f);
@@ -303,4 +304,65 @@ public class IllMorseScript : MonoBehaviour
         }
         return new string(charArray);
     }
+#pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"'!{0} next' to generate a new word. '!{0} submit' to enter submission. '!{0} submit "".--.. .---. .---.""' to submit that sequence into the module.";
+#pragma warning restore 414
+
+    IEnumerator ProcessTwitchCommand(string command)
+    {
+        
+        if (command == "next"){
+            yield return null;
+            nextButton.OnInteract();
+        }
+        else if (command == "submit"){
+            yield return null;
+            submitButton.OnInteract();
+        }
+        else if (command.StartsWith("submit \""))
+        {
+            if (command.Count(C=>C=='\"') == 2){
+                string[] sequence = command.Split('\"');
+                for (int i = 0; i < sequence[1].Length; i++){
+                    if (!sequence[1][i].EqualsAny('.', '-', ' ')){
+                        yield break;
+                    }
+                }
+                yield return null;
+                for (int i = 0; i < sequence[1].Length; i++){
+                    if (sequence[1][i] == '.'){
+                        dotButton.OnInteract();
+                        yield return new WaitForSeconds(0.15f);
+                    }
+                    else if (sequence[1][i] == '-'){
+                        dashButton.OnInteract();
+                        yield return new WaitForSeconds(0.15f);
+                    }
+                    else if(sequence[1][i] == ' '){
+                        spaceButton.OnInteract();
+                        yield return new WaitForSeconds(0.15f);
+                    }
+                }
+                yield return new WaitForSeconds(0.1f);
+                submitButton.OnInteract();
+            }
+        }
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        if (!acceptingAnswer){
+            submitButton.OnInteract();
+            yield return new WaitForSeconds(0.4f);
+        }
+        MainDisplay.text = "";
+        int stage = stageCounter;
+        for (int i = 0; i < 3 - stage; i++){
+            yield return ProcessTwitchCommand("submit \"" + morseAnswer + "\"");
+        }
+        while (!_moduleSolved){
+            yield return true;
+        }
+    }
+    
 }
