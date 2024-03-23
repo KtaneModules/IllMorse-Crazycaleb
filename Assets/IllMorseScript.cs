@@ -65,7 +65,7 @@ public class IllMorseScript : MonoBehaviour
         }
         else if (acceptingAnswer && stageCounter < 3 && stageCounter != 4){
             
-            if (MainDisplay.text == morseAnswer){
+            if (MainDisplay.text.Trim() == morseAnswer){
                 Stages[stageCounter].GetComponent<MeshRenderer>().material = LED[1]; //each correct stage changes green
                 stageCounter++;
                 if (stageCounter == 3){
