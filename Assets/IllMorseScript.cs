@@ -46,14 +46,14 @@ public class IllMorseScript : MonoBehaviour
         DisplayRandomWord(letters, letterToMorseMap);
 
         
-        dotButton.OnInteract += delegate () { DotButton(); return false; };
-        dashButton.OnInteract += delegate () { DashButton(); return false; };
-        spaceButton.OnInteract += delegate () { SpaceButton(); return false; };
-        nextButton.OnInteract += delegate () { NextButton(); return false; };
-        submitButton.OnInteract += delegate () { Submission(); return false; };
+        dotButton.OnInteract += delegate () { PressDotButton(); return false; };
+        dashButton.OnInteract += delegate () { PressDashButton(); return false; };
+        spaceButton.OnInteract += delegate () { PressSpaceButton(); return false; };
+        nextButton.OnInteract += delegate () { PressNextButton(); return false; };
+        submitButton.OnInteract += delegate () { PressSubmitButton(); return false; };
     }
 
-    void Submission(){
+    void PressSubmitButton(){
         GetComponent<KMSelectable>().AddInteractionPunch(0.5f);
         Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonPress, transform);
         if (!acceptingAnswer){
@@ -107,50 +107,40 @@ public class IllMorseScript : MonoBehaviour
             Module.HandlePass();
             _moduleSolved = true;
         }
-    public void DotButton(){
+    public void PressDotButton(){
         GetComponent<KMSelectable>().AddInteractionPunch(0.5f);
         Audio.PlaySoundAtTransform("KeySound", transform);
-        if (!acceptingAnswer){
+        if (!acceptingAnswer)
             return;
-        }
         MainDisplay.text += ".";
     }
 
-    public void DashButton()
+    public void PressDashButton()
     {
         GetComponent<KMSelectable>().AddInteractionPunch(0.5f);
         Audio.PlaySoundAtTransform("KeySound", transform);
         if (!acceptingAnswer)
-        {
             return;
-        }
         MainDisplay.text += "-";
     }
 
-    public void SpaceButton()
+    public void PressSpaceButton()
     {
         GetComponent<KMSelectable>().AddInteractionPunch(0.5f);
         Audio.PlaySoundAtTransform("SpaceSound", transform);
         if (!acceptingAnswer)
-        {
             return;
-        }
         MainDisplay.text += " ";
     }
 
-    public void NextButton()
+    public void PressNextButton()
     {
         GetComponent<KMSelectable>().AddInteractionPunch(0.5f);
         Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonPress, transform);
         if (acceptingAnswer)
-        {
             return;
-        }
         DisplayRandomWord(letters, letterToMorseMap);
     }
-
-
-
 
     void GenerateLetters(){
         ShuffleArray(morseCombinations);
@@ -159,7 +149,6 @@ public class IllMorseScript : MonoBehaviour
         {
             letters[i] = (char)('A' + i);
             letterToMorseMap[i] = morseCombinations[i];
-            Debug.LogFormat(letters[i] + " = " + letterToMorseMap[i]);
             Debug.LogFormat("[Ill Morse #{0}] {1} = {2}", _moduleId, letters[i], letterToMorseMap[i]);
         }
     }
@@ -305,60 +294,98 @@ public class IllMorseScript : MonoBehaviour
         return new string(charArray);
     }
 #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"'!{0} next' to generate a new word. '!{0} submit' to enter submission. '!{0} submit "".--.. .---. .---.""' to submit that sequence into the module.";
+    private readonly string TwitchHelpMessage = @"'!{0} next' to generate a new word. '!{0} submit' to enter submission. '!{0} submit .--.. .---. .---.' to submit that sequence into the module. '!{0} skip to Q' to generate a word until that letter (or letters) exist on the screen.";
 #pragma warning restore 414
 
-    IEnumerator ProcessTwitchCommand(string command)
+    private IEnumerator ProcessTwitchCommand(string command)
     {
-        
-        if (command == "next"){
+        command = command.Trim().ToLowerInvariant();
+        if (Regex.IsMatch(command, @"^\s*next\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
             yield return null;
             nextButton.OnInteract();
+            yield break;
         }
-        else if (command == "submit"){
+        if (Regex.IsMatch(command, @"^\s*submit\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
             yield return null;
             submitButton.OnInteract();
+            yield break;
         }
-        else if (command.StartsWith("submit \""))
+        var m = Regex.Match(command, @"^\s*skip\s+to\s+(?<letter>[ABCDEFGHIJKLMNOPQRSTUVWXYZ ]+)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (m.Success)
         {
-            if (command.Count(C=>C=='\"') == 2){
-                string[] sequence = command.Split('\"');
-                for (int i = 0; i < sequence[1].Length; i++){
-                    if (!sequence[1][i].EqualsAny('.', '-', ' ')){
-                        yield break;
-                    }
-                }
-                yield return null;
-                for (int i = 0; i < sequence[1].Length; i++){
-                    if (sequence[1][i] == '.'){
-                        dotButton.OnInteract();
-                        yield return new WaitForSeconds(0.15f);
-                    }
-                    else if (sequence[1][i] == '-'){
-                        dashButton.OnInteract();
-                        yield return new WaitForSeconds(0.15f);
-                    }
-                    else if(sequence[1][i] == ' '){
-                        spaceButton.OnInteract();
-                        yield return new WaitForSeconds(0.15f);
-                    }
-                }
-                yield return new WaitForSeconds(0.1f);
-                submitButton.OnInteract();
+            yield return null;
+            nextButton.OnInteract();
+            yield return new WaitForSeconds(0.05f);
+            var letters = m.Groups["letter"].Value.ToUpperInvariant();
+            while (!letters.Any(i => WordDisplay.text.Contains(i)))
+            {
+                nextButton.OnInteract();
+                yield return new WaitForSeconds(0.05f);
             }
+        }
+        if (command.StartsWith("submit "))
+        {
+            if (!acceptingAnswer)
+            {
+                yield return "sendtochaterror The module is not currently accepting input.";
+                yield break;
+            }
+            var c = command.Substring(7);
+            if (!c.All(x => ".- ".Contains(x)))
+                yield break;
+            yield return null;
+            for (int i = 0; i < c.Length; i++)
+            {
+                if (c[i] == '.')
+                    dotButton.OnInteract();
+                if (c[i] == '-')
+                    dashButton.OnInteract();
+                if (c[i] == ' ')
+                {
+                    spaceButton.OnInteract();
+                    yield return new WaitForSeconds(0.05f);
+                }
+                yield return new WaitForSeconds(0.05f);
+            }
+            yield return new WaitForSeconds(0.1f);
+            submitButton.OnInteract();
+            yield break;
         }
     }
 
     IEnumerator TwitchHandleForcedSolve()
     {
-        if (!acceptingAnswer){
+        if (!acceptingAnswer)
+        {
             submitButton.OnInteract();
             yield return new WaitForSeconds(0.4f);
         }
-        MainDisplay.text = "";
+        if (!morseAnswer.StartsWith(MainDisplay.text))
+        {
+            Debug.LogFormat("[Ill Morse #{0}] The autosolver detected an incorrect input. Resetting display.", _moduleId);
+            MainDisplay.text = "";
+        }
         int stage = stageCounter;
-        for (int i = 0; i < 3 - stage; i++){
-            yield return ProcessTwitchCommand("submit \"" + morseAnswer + "\"");
+        for (int st = 0; st < 3 - stage; st++)
+        {
+            int start = MainDisplay.text.Length;
+            for (int i = start; i < morseAnswer.Length; i++)
+            {
+                if (morseAnswer[i] == '.')
+                    dotButton.OnInteract();
+                if (morseAnswer[i] == '-')
+                    dashButton.OnInteract();
+                if (morseAnswer[i] == ' ')
+                {
+                    spaceButton.OnInteract();
+                    yield return new WaitForSeconds(0.05f);
+                }
+                yield return new WaitForSeconds(0.05f);
+            }
+            yield return new WaitForSeconds(0.1f);
+            submitButton.OnInteract();
         }
         while (!_moduleSolved){
             yield return true;
